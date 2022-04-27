@@ -1,0 +1,290 @@
+
+# media containers
+services:
+
+  traefik:
+    image: traefik:v2.2.0
+    # Expose these ports to directly access all containers on your public interface (e.g. useful on macOS)
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+
+    # command: --web --docker --docker.domain=local --logLevel=DEBUG
+    command:
+      - --entrypoints.http.address=:80
+      - --entrypoints.https.address=:443
+      - --entrypoints.http.forwardedHeaders.insecure
+      - --entrypoints.https.forwardedHeaders.insecure
+      # - --entrypoints.http.http.redirections.entryPoint.to=https
+      # - --entrypoints.http.http.redirections.entryPoint.scheme=https
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --api.insecure
+      - --providers.file.directory=/config
+    # hostname: pleroma.local
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./var/lib/majortom/traefik/:/config/
+    #  - ./infra/dev/traefik/certs:/certs
+      # - /dev/null:/traefik.toml
+    networks:
+      default:
+        aliases:
+          - ombi.localhost
+          - ombi.stream.doxx.fr
+          # - stream.doxx.fr
+          # - jellyfin.local
+          - request.stream.doxx.fr
+          - bazarr.stream.doxx.fr
+          - subs.stream.doxx.fr
+          - films.stream.doxx.fr
+          - series.stream.doxx.fr
+          - series.localhost
+          - music.doxx.fr
+          - books.doxx.fr
+          - articles.doxx.fr
+          # - rmatrix.local
+
+  ombi:
+    image: linuxserver/ombi:latest
+    container_name: ombi
+    restart: always
+    ports:
+      - 3579:3579
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=Europe/Paris
+    volumes:
+      - /mnt/gloubinours/jellies-db/ombi/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      - "traefik.enable=true"
+      # - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.ombi.entrypoints=web,websecure"
+      - "traefik.http.routers.ombi.rule=Host(`request.stream.doxx.fr`)"
+      - "traefik.http.services.ombi.loadbalancer.server.port=3579"
+      - "traefik.http.routers.ombi.tls=true"
+      - "traefik.http.routers.ombi.tls.certresolver=leresolver"
+
+  sonarr:
+    image: linuxserver/sonarr:latest
+    restart: always
+    environment:
+      - PUID=33
+      - PGID=1002
+      - TZ=Europe/Paris
+    volumes:
+      - /mnt/gloubinours/jellies-db/sonarr/config:/config
+      - /mnt/gloubinours/shows:/tv
+      - /mnt/gloubinours/transmission:/downloads
+    ports:
+      - 8989:8989
+        #    depends_on:
+    #   - qbittorrent
+    #   - nzbget
+    #      - prowlarr
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
+    #   - "traefik.http.routers.sonarr.rule=Host(`sonarr.doxx.fr`)"
+    #   - "traefik.http.routers.sonarr.middlewares=private@file"
+
+  radarr:
+    image: linuxserver/radarr:nightly
+    restart: always
+    environment:
+      - PUID=33
+      - PGID=33
+      - TZ=America/New_York
+
+    volumes:
+      - /mnt/gloubinours/jellies-db/radarr/config:/config
+      - /mnt/gloubinours/movies:/movies
+      - /mnt/gloubinours/transmission:/downloads
+    ports:
+      - 7878:7878
+        #depends_on:
+      # - prowlarr
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.services.radarr.loadbalancer.server.port=7878"
+    #   - "traefik.http.routers.radarr.rule=Host(`radarr.doxx.fr`)"
+    #   - "traefik.http.routers.radarr.middlewares=private@file"
+
+  bazarr:
+    image: linuxserver/bazarr:latest
+    restart: always
+    environment:
+      - PUID=33
+      - PGID=33
+      - TZ=America/New_York
+    volumes:
+      - /mnt/gloubinours/jellies-db/bazarr/config:/config
+      - /mnt/gloubinours/movies:/movies
+      - /mnt/gloubinours/shows:/tv
+    expose:
+      - 6767
+    depends_on:
+      - sonarr
+      - radarr
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.services.bazarr.loadbalancer.server.port=6767"
+    #   - "traefik.http.routers.bazarr.rule=Host(`bazarr.doxx.fr`)"
+    #   - "traefik.http.routers.bazarr.middlewares=private@file"
+
+  lidarr:
+    image: linuxserver/lidarr:latest
+    restart: always
+    environment:
+      - PUID=33
+      - PGID=33
+      - TZ=America/New_York
+    volumes:
+      - /tank/container_data/lidarr:/config
+      - /tank/cloud/music:/music
+      - /tank/downloads:/downloads
+    expose:
+      - 8686
+    # depends_on:
+    #   - qbittorrent
+    #   - nzbget
+    #   - prowlarr
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
+    #   - "traefik.http.routers.lidarr.rule=Host(`lidarr.doxx.fr`)"
+    #   - "traefik.http.routers.lidarr.middlewares=private@file"
+
+  readarr:
+    image: linuxserver/readarr:nightly
+    restart: always
+    environment:
+      - PUID=33
+      - PGID=33
+      - TZ=America/New_York
+    volumes:
+      - /tank/container_data/readarr:/config
+      - /tank/cloud/books:/books
+      - /tank/downloads:/downloads
+    expose:
+      - 8787
+    # depends_on:
+    #   - qbittorrent
+    #   - nzbget
+    #   - prowlarr
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.readarr.loadbalancer.server.port=8787"
+      - "traefik.http.routers.readarr.rule=Host(`readarr.doxx.fr`)"
+      - "traefik.http.routers.readarr.middlewares=private@file"
+
+
+  jackett:
+    image: linuxserver/jackett:latest
+    container_name: jackett
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:8000:80"
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=Europe/Paris
+    volumes:
+      - /mnt/gloubinours/jellies-db/jackett/config:/config
+      - /etc/localtime:/etc/localtime:ro
+
+
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.jackett.entrypoints=web,websecure"
+    #   - "traefik.http.routers.jackett.rule=Host(`jackett.doxx.fr`)"
+    #   - "traefik.http.services.jackett.loadbalancer.server.port=9117"
+    #   - "traefik.http.routers.jackett.tls=true"
+    #   - "traefik.http.routers.jackett.tls.certresolver=leresolver"
+# jellyfin:
+#   image: jellyfin/jellyfin:latest
+#   restart: always
+#   environment:
+#     - UID=33
+#     - GID=33
+#     - TZ=America/New_York
+#   devices:
+#     - /dev/dri
+#   volumes:
+#     - /tmp/jellyfin:/transcodes
+#     - /tank/container_data/jellyfin_config:/config
+#     - /tank/container_data/jellyfin_cache:/cache
+#     - /tank/cloud/videos:/media/video:ro
+#     - /tank/cloud/music:/media/music:ro
+#     - /tank/cloud/books:/media/books:ro
+#   expose:
+#     - 8096
+#   ports:
+#     - 1900:1900/udp
+#   labels:
+#     - "traefik.enable=true"
+#     - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
+#     - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.doxx.fr`)"
+#     - "traefik.http.routers.jellyfin.middlewares=secure@file"
+
+#qbittorrent:
+#   image: linuxserver/qbittorrent:latest
+#   restart: always
+#   environment:
+#     - PUID=33
+#     - PGID=33
+#     - UMASK=022
+#     - TZ=America/New_York
+#     - WEBUI_PORT=8080
+#   volumes:
+#     - /tank/container_data/qbittorrent:/config
+#     - /tank/downloads:/downloads
+#   expose:
+#     - 8080
+#   ports:
+#     - 1080:1080/tcp
+#     - 1080:1080/udp
+#   labels:
+#     - "traefik.enable=true"
+#     - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
+#     - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.doxx.fr`)"
+#     - "traefik.http.routers.qbittorrent.middlewares=private@file"
+
+  # nzbget:
+  #   image: linuxserver/nzbget:latest
+  #   restart: always
+  #   environment:
+  #     - PUID=33
+  #     - PGID=33
+  #     - UMASK=022
+  #     - TZ=America/New_York
+  #   volumes:
+  #     - /tank/container_data/nzbget:/config
+  #     - /tank/downloads/nzbget:/downloads
+  #   expose:
+  #     - 6789
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.services.nzbget.loadbalancer.server.port=6789"
+  #     - "traefik.http.routers.nzbget.rule=Host(`nzbget.doxx.fr`)"
+  #     - "traefik.http.routers.nzbget.middlewares=private@file"
+
+  # prowlarr:
+  #   image: linuxserver/prowlarr:nightly
+  #   restart: always
+  #   environment:
+  #     - PUID=33
+  #     - PGID=33
+  #     - TZ=America/New_York
+  #   volumes:
+  #     - /tank/container_data/prowlarr:/config
+  #   expose:
+  #     - 9696 
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
+  #     - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.doxx.fr`)"
+  #     - "traefik.http.routers.prowlarr.middlewares=private@file"

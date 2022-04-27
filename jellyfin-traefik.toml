@@ -1,0 +1,3 @@
+[providers]
+  [providers.file]
+    directory = "/etc/traefik/providers"
