@@ -95,8 +95,8 @@ services:
     image: linuxserver/radarr:nightly
     restart: always
     environment:
-      - PUID=33
-      - PGID=33
+      - PUID=1002
+      - PGID=1002
       - TZ=America/New_York
 
     volumes:
@@ -187,7 +187,7 @@ services:
     container_name: jackett
     restart: unless-stopped
     ports:
-      - "0.0.0.0:8000:80"
+      - "9117:9117"
     environment:
       - PUID=1001
       - PGID=1001
