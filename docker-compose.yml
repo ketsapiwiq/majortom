@@ -117,18 +117,15 @@ services:
     image: linuxserver/bazarr:latest
     restart: always
     environment:
-      - PUID=33
-      - PGID=33
+      - PUID=1002
+      - PGID=1002
       - TZ=America/New_York
     volumes:
       - /mnt/gloubinours/jellies-db/bazarr/config:/config
       - /mnt/gloubinours/movies:/movies
       - /mnt/gloubinours/shows:/tv
-    expose:
-      - 6767
-    depends_on:
-      - sonarr
-      - radarr
+    ports:
+      - 6767:6767
     # labels:
     #   - "traefik.enable=true"
     #   - "traefik.http.services.bazarr.loadbalancer.server.port=6767"
@@ -139,19 +136,15 @@ services:
     image: linuxserver/lidarr:latest
     restart: always
     environment:
-      - PUID=33
-      - PGID=33
+      - PUID=1002
+      - PGID=1002
       - TZ=America/New_York
+    ports: 
+      - 8686:8686
     volumes:
-      - /tank/container_data/lidarr:/config
-      - /tank/cloud/music:/music
-      - /tank/downloads:/downloads
-    expose:
-      - 8686
-    # depends_on:
-    #   - qbittorrent
-    #   - nzbget
-    #   - prowlarr
+      - /mnt/gloubinours/jellies-db/lidarr/config:/config
+      - /mnt/gloubinours/music:/music
+      - /mnt/gloubinours/transmission:/downloads
     # labels:
     #   - "traefik.enable=true"
     #   - "traefik.http.services.lidarr.loadbalancer.server.port=8686"
