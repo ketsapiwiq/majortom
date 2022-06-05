@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: lidarr
+  name: lidarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: lidarr
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: lidarr
+    spec:
+      containers:
+        - env:
+            - name: PGID
+              value: "1002"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: Europe/Paris
+          image: linuxserver/lidarr:latest
+          name: lidarr
+          ports:
+            - containerPort: 8686
+          resources: {}
+          volumeMounts:
+            - mountPath: /config
+              name: lidarr-claim0
+            - mountPath: /music
+              name: lidarr-claim1
+            - mountPath: /downloads
+              name: lidarr-claim2
+      restartPolicy: Always
+      volumes:
+        - name: lidarr-claim0
+          persistentVolumeClaim:
+            claimName: lidarr-claim0
+        - name: lidarr-claim1
+          persistentVolumeClaim:
+            claimName: lidarr-claim1
+        - name: lidarr-claim2
+          persistentVolumeClaim:
+            claimName: lidarr-claim2
+status: {}

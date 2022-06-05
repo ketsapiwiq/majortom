@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: radarr
+  name: radarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: radarr
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: radarr
+    spec:
+      containers:
+        - env:
+            - name: PGID
+              value: "1002"
+            - name: PUID
+              value: "1000"
+            - name: TZ
+              value: Europe/Paris
+          image: linuxserver/radarr:nightly
+          name: radarr
+          ports:
+            - containerPort: 7878
+          resources: {}
+          volumeMounts:
+            - mountPath: /config
+              name: radarr-claim0
+            - mountPath: /movies
+              name: radarr-claim1
+            - mountPath: /downloads
+              name: radarr-claim2
+      restartPolicy: Always
+      volumes:
+        - name: radarr-claim0
+          persistentVolumeClaim:
+            claimName: radarr-claim0
+        - name: radarr-claim1
+          persistentVolumeClaim:
+            claimName: radarr-claim1
+        - name: radarr-claim2
+          persistentVolumeClaim:
+            claimName: radarr-claim2
+status: {}

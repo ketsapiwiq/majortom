@@ -1,0 +1,18 @@
+WARN Restart policy 'unless-stopped' in service jackett is not supported, convert it to 'always' 
+WARN Volume mount on the host "/mnt/gloubinours/jellies-db/bazarr/config" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/movies" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/shows" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/jellies-db/jackett/config" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/etc/localtime" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/jellies-db/lidarr/config" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/music" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/transmission" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/jellies-db/ombi/config" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/etc/localtime" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/jellies-db/radarr/config" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/movies" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/transmission" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/jellies-db/sonarr/config" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/shows" isn't supported - ignoring path on the host 
+WARN Volume mount on the host "/mnt/gloubinours/transmission" isn't supported - ignoring path on the host 
+

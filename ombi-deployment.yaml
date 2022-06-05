@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: ombi
+  name: ombi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: ombi
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: ombi
+    spec:
+      containers:
+        - env:
+            - name: PGID
+              value: "1002"
+            - name: PUID
+              value: "1001"
+            - name: TZ
+              value: Europe/Paris
+          image: linuxserver/ombi:latest
+          name: ombi
+          ports:
+            - containerPort: 3579
+          resources: {}
+          volumeMounts:
+            - mountPath: /config
+              name: ombi-claim0
+            - mountPath: /etc/localtime
+              name: ombi-claim1
+              readOnly: true
+      restartPolicy: Always
+      volumes:
+        - name: ombi-claim0
+          persistentVolumeClaim:
+            claimName: ombi-claim0
+        - name: ombi-claim1
+          persistentVolumeClaim:
+            claimName: ombi-claim1
+            readOnly: true
+status: {}

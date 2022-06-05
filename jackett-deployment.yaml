@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: jackett
+  name: jackett
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: jackett
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: jackett
+    spec:
+      containers:
+        - env:
+            - name: PGID
+              value: "1001"
+            - name: PUID
+              value: "1001"
+            - name: TZ
+              value: Europe/Paris
+          image: linuxserver/jackett:latest
+          name: jackett
+          ports:
+            - containerPort: 9117
+          resources: {}
+          volumeMounts:
+            - mountPath: /config
+              name: jackett-claim0
+            - mountPath: /etc/localtime
+              name: jackett-claim1
+              readOnly: true
+      restartPolicy: Always
+      volumes:
+        - name: jackett-claim0
+          persistentVolumeClaim:
+            claimName: jackett-claim0
+        - name: jackett-claim1
+          persistentVolumeClaim:
+            claimName: jackett-claim1
+            readOnly: true
+status: {}
