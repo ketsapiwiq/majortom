@@ -225,7 +225,7 @@ services:
     restart: unless-stopped
     networks:
       - default
-    env_file: funkwhale/.env
+    env_file: .env
     environment:
       - "POSTGRES_HOST_AUTH_METHOD=trust"
     image: postgres:11
@@ -236,7 +236,7 @@ services:
     restart: unless-stopped
     networks:
       - default
-    env_file: funkwhale/.env
+    env_file: .env
     image: redis:5
     volumes:
       - ./data/redis:/data
@@ -249,7 +249,7 @@ services:
     depends_on:
       - postgres
       - redis
-    env_file: funkwhale/.env
+    env_file: .env
     # Celery workers handle background tasks (such file imports or federation
     # messaging). The more processes a worker gets, the more tasks
     # can be processed in parallel. However, more processes also means
@@ -262,8 +262,9 @@ services:
     environment:
       - C_FORCE_ROOT=true
     volumes:
-      - "${MUSIC_DIRECTORY_SERVE_PATH-/srv/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
-      - "${MEDIA_ROOT}:${MEDIA_ROOT}"
+
+      - "${MUSIC_DIRECTORY_SERVE_PATH-/tmp/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
+      - "${MEDIA_ROOT}:/data/media"
 
   celerybeat:
     restart: unless-stopped
@@ -273,10 +274,13 @@ services:
     depends_on:
       - postgres
       - redis
-    env_file: funkwhale/.env
+    env_file: .env
     command: celery -A funkwhale_api.taskapp beat --pidfile= -l INFO
 
   api:
+    #network_aliases:
+    # - funkwhale-api
+    #  - api
     restart: unless-stopped
     image: funkwhale/funkwhale:${FUNKWHALE_VERSION:-latest}
     # networks:
@@ -284,43 +288,46 @@ services:
     depends_on:
       - postgres
       - redis
-    env_file: funkwhale/.env
+    env_file: .env
     volumes:
-      - "${MUSIC_DIRECTORY_SERVE_PATH-/srv/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
+      - "${MUSIC_DIRECTORY_SERVE_PATH-~/Music/}:${MUSIC_DIRECTORY_PATH-/music}:ro"
       - "${MEDIA_ROOT}:${MEDIA_ROOT}"
       - "${STATIC_ROOT}:${STATIC_ROOT}"
-      - "${FUNKWHALE_FRONTEND_PATH}:/frontend"
-    ports:
-      - "localhost:5000:5000"
+      - "funkwhale-frontend:/data/frontend"
+#FUNKWHALE_FRONTEND_PATH=/var/lib/funkwhale/frontend
 
-  nginx:
+# Nginx related configuration
+
+  funkwhale-nginx:
     restart: unless-stopped
+    # ports:
+    #   - "127.0.0.1:5000:5000"
     image: nginx
+    
     # networks:
     #   - default
-    depends_on:
-      - api
     env_file:
       - .env
     environment:
       # Override those variables in your .env file if needed
       - "NGINX_MAX_BODY_SIZE=${NGINX_MAX_BODY_SIZE-100M}"
     volumes:
-      - "./nginx/funkwhale.template:/etc/nginx/conf.d/funkwhale.template:ro"
-      - "./nginx/funkwhale_proxy.conf:/etc/nginx/funkwhale_proxy.conf:ro"
+      - "./nginx/funkwhale.template:/etc/nginx/conf.d/funkwhale.template"
+      - "./nginx/funkwhale_proxy.conf:/etc/nginx/funkwhale_proxy.conf"
+      - "./nginx/conf.d/funkwhale.conf:/etc/nginx/conf.d/funkwhale.conf"
       - "${MUSIC_DIRECTORY_SERVE_PATH-/srv/funkwhale/data/music}:${MUSIC_DIRECTORY_PATH-/music}:ro"
       - "${MEDIA_ROOT}:${MEDIA_ROOT}:ro"
       - "${STATIC_ROOT}:${STATIC_ROOT}:ro"
-      - "${FUNKWHALE_FRONTEND_PATH}:/frontend:ro"
+      - "funkwhale-frontend:/data/frontend:ro"
     ports:
       # override those variables in your .env file if needed
       - "${FUNKWHALE_API_IP}:${FUNKWHALE_API_PORT}:80"
     command: >
         sh -c "envsubst \"`env | awk -F = '{printf \" $$%s\", $$1}'`\"
         < /etc/nginx/conf.d/funkwhale.template
-        > /etc/nginx/conf.d/default.conf
-        && cat /etc/nginx/conf.d/default.conf
-        && nginx -g 'daemon off;'"
+        > /etc/nginx/conf.d/funkwhale.conf"
 
+volumes:
+    funkwhale-frontend:
 # networks:
 #   default:
