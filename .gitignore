@@ -1,2 +1,4 @@
 funkwhale/funkwhale/data/
 funkwhale/data/
+data/redis/dump.rdb
+ombi/appsettings.json
